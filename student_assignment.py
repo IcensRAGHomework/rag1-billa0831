@@ -8,8 +8,8 @@ import requests
 from model_configurations import get_model_configuration
 
 from langchain_openai import AzureChatOpenAI
-from langchain_core.messages import HumanMessage
-from langchain.prompts import PromptTemplate
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain.prompts import HumanMessagePromptTemplate, PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from openai.types.chat.completion_create_params import ResponseFormat
 from langchain.utils.openai_functions import convert_pydantic_to_openai_function
@@ -24,6 +24,9 @@ from langchain_core.runnables import (
     ConfigurableFieldSpec,
     RunnablePassthrough,
 )
+
+from langchain.schema import Document
+from langchain.prompts import PromptTemplate
 
 gpt_chat_version = 'gpt-4o'
 gpt_config = get_model_configuration(gpt_chat_version)
@@ -251,16 +254,124 @@ def generate_hw03(question2, question3):
     # Uses the store defined in the example above.
     print(store)  # noqa: T201
 
-    response2 = chain_with_history.invoke(  # noqa: T201
+    response = chain_with_history.invoke(  # noqa: T201
         {"question": HumanMessage([f'請回答以下問題並以 JSON 格式輸出，格式如下: {{\"Result\": {{\"add\": \"這是一個布林值，表示是否需要將節日新增到節日清單中。根據問題判斷該節日是否存在於清單中，如果不存在，則為 true；否則為 false。\", \"reason\": \"描述為什麼需要或不需要新增節日，具體說明是否該節日已經存在於清單中，以及當前清單的內容。\"}}}} : {question3}'])},
         config={"configurable": {"session_id": "foo"}}
     )
 
     parser = JsonOutputParser()
-    parsed_result = parser.parse(response2.content)
+    parsed_result = parser.parse(response.content)
     return json.dumps(parsed_result, ensure_ascii=False)
+
+from langchain_community.document_loaders import UnstructuredImageLoader
+import base64
+from mimetypes import guess_type
+
+def image_to_data_url(image_path):
+    with open(image_path, "rb") as img_file:
+        img_data = img_file.read()
+        return "data:image/jpeg;base64," + base64.b64encode(img_data).decode('utf-8')
     
+def local_image_to_data_url_old(image_path):
+    mime_type, _ = guess_type(image_path)
+    # Default to png
+    if mime_type is None:
+        mime_type = 'image/png'
+
+    # Read and encode the image file
+    with open(image_path, "rb") as image_file:
+        base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
+
+    # Construct the data URL
+    return f"data:{mime_type};base64,{base64_encoded_data}"
+
+
+def local_image_to_data_url(image_path):
+    # Guess the MIME type of the image based on the file extension
+    mime_type, _ = guess_type(image_path)
+    if mime_type is None:
+        mime_type = 'application/octet-stream'  # Default MIME type if none is found
+
+    # Read and encode the image file
+    with open(image_path, "rb") as image_file:
+        base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
+
+    # Construct the data URL
+    return f"data:{mime_type};base64,{base64_encoded_data}"
+
+
 def generate_hw04(question):
+    print(question)
+
+    # Define the prompt template with the image_url
+    prompt_messages = [
+        
+        SystemMessage(content="f'請回答以下問題{question} 並以 JSON 格式輸出，格式如下: {{\"Result\": {{\"score\": \"答案\"}}}}'"),
+        HumanMessagePromptTemplate.from_template(
+            template=[
+                {"type": "image_url", "image_url": {"url": "{encoded_image_url}"}},
+            ]
+        ),
+    ]
+
+    prompt_template = ChatPromptTemplate(messages=prompt_messages)
+
+    
+    img_file = "D:/RAG/rag1-billa0831-main/baseball.png"
+    page3_encoded = local_image_to_data_url(img_file)
+
+
+    summarize_image_prompt = ChatPromptTemplate.from_messages([prompt_template])
+
+    llm = AzureChatOpenAI(
+            model=gpt_config['model_name'],
+            deployment_name=gpt_config['deployment_name'],
+            openai_api_key=gpt_config['api_key'],
+            openai_api_version=gpt_config['api_version'],
+            azure_endpoint=gpt_config['api_base'],
+            temperature=gpt_config['temperature']
+    )
+    messages=[
+        { "role": "system", "content": "You are a helpful assistant." },
+        { "role": "user", "content": [  
+            { 
+                "type": "text", 
+                "text": f'請回答 {question},以 JSON 格式輸出，格式如下: {{\"Result\": {{\"score\": \"答案\"}}}}'
+            },
+            { 
+                "type": "image_url",
+                "image_url": {
+                    "url": page3_encoded
+                }
+            }
+        ] } 
+    ]
+
+    chain = llm 
+    response = chain.invoke(messages)
+    parser = JsonOutputParser()
+    print(response.content)
+    parsed_result = parser.parse(response.content)
+    parsed_result["Result"]["score"] = int(parsed_result["Result"]["score"])
+    return json.dumps(parsed_result, ensure_ascii=False)
+    # pass
+    # # 5. 設定 LangChain 的 PromptTemplate
+    # prompt_template = """
+    # 從以下文本中找出「中華台北」的積分：
+    # {text}
+    # 請提供積分數字。
+    # """
+    # prompt = PromptTemplate(input_variables=["text"], template=prompt_template)
+    # chain = prompt | llm 
+    # # 6. 配置 LangChain 分析文檔鏈
+    # chain = AnalyzeDocumentChain(combine_docs_chain=chain)
+
+    # # 7. 提問並得到答案
+    # question = "中華台北的積分是多少？"
+    # response = chain.run(doc)
+    # parser = JsonOutputParser()
+    # parsed_result = parser.parse(response.content)
+    # return json.dumps(parsed_result, ensure_ascii=False)
     pass
     
 def demo(question):
@@ -285,10 +396,14 @@ def demo(question):
 question = "2024年台灣10月紀念日有哪些?"
 question2 = "2024年台灣10月紀念日有哪些?"
 question3 = "根據先前的節日清單，這個節日{\"date\": \"10-31\", \"name\": \"蔣公誕辰紀念日\"}是否有在該月份清單？"
+question4 = "請問日本的積分是多少"
 # hw1
 # result = generate_hw01(question)
 # print(result)
 
 # hw2
-result = generate_hw03(question2, question3)
+# result = generate_hw03(question2, question3)
+# print(result)
+
+result = generate_hw04(question4)
 print(result)
