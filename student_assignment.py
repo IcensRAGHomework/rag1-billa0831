@@ -21,6 +21,8 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from pydantic import BaseModel, Field
 
 from langchain.prompts import PromptTemplate
+import base64
+from mimetypes import guess_type
 
 gpt_chat_version = 'gpt-4o'
 gpt_config = get_model_configuration(gpt_chat_version)
@@ -218,9 +220,6 @@ def generate_hw03(question2, question3):
     parsed_result = parser.parse(response.content)
     return json.dumps(parsed_result, ensure_ascii=False)
 
-# import base64
-# from mimetypes import guess_type
-
 # def image_to_data_url(image_path):
 #     with open(image_path, "rb") as img_file:
 #         img_data = img_file.read()
@@ -240,18 +239,18 @@ def generate_hw03(question2, question3):
 #     return f"data:{mime_type};base64,{base64_encoded_data}"
 
 
-# def local_image_to_data_url(image_path):
-#     # Guess the MIME type of the image based on the file extension
-#     mime_type, _ = guess_type(image_path)
-#     if mime_type is None:
-#         mime_type = 'application/octet-stream'  # Default MIME type if none is found
+def local_image_to_data_url(image_path):
+    # Guess the MIME type of the image based on the file extension
+    mime_type, _ = guess_type(image_path)
+    if mime_type is None:
+        mime_type = 'application/octet-stream'  # Default MIME type if none is found
 
-#     # Read and encode the image file
-#     with open(image_path, "rb") as image_file:
-#         base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
+    # Read and encode the image file
+    with open(image_path, "rb") as image_file:
+        base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
 
-#     # Construct the data URL
-#     return f"data:{mime_type};base64,{base64_encoded_data}"
+    # Construct the data URL
+    return f"data:{mime_type};base64,{base64_encoded_data}"
 
 
 def generate_hw04(question):
