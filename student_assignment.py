@@ -70,7 +70,10 @@ def generate_hw01(question):
 
     prompt_template = """
     please answer question
-    將輸出格式化為json,  {{\"Result\": [{{\"name\": \"紀念日名稱\", \"date\": \"YYYY-MM-DD\"}}]}}
+    將輸出格式化為json, 包含以下鍵
+    Result
+    name
+    date
 
     問題：{question}
     """
@@ -149,7 +152,14 @@ def generate_hw02(question):
     # calapi = calendarific.v2('JKoxdMesIZE3ZjOdoqpT6Ay7425lr1BO')
     
     # holidays = calapi.holidays(parameters)
-
+    llm = AzureChatOpenAI(
+            model=gpt_config['model_name'],
+            deployment_name=gpt_config['deployment_name'],
+            openai_api_key=gpt_config['api_key'],
+            openai_api_version=gpt_config['api_version'],
+            azure_endpoint=gpt_config['api_base'],
+            temperature=gpt_config['temperature']
+    )
     llm_with_tools = llm.bind_tools(tools)
     
     # # holidays_llm = json_llm.bind(holidays)
