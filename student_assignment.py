@@ -254,56 +254,39 @@ def local_image_to_data_url(image_path):
 
 
 def generate_hw04(question):
-    # print(question)
+    image_path = 'baseball.png'
+    page3_encoded = local_image_to_data_url(image_path)
+    llm = AzureChatOpenAI(
+            model=gpt_config['model_name'],
+            deployment_name=gpt_config['deployment_name'],
+            openai_api_key=gpt_config['api_key'],
+            openai_api_version=gpt_config['api_version'],
+            azure_endpoint=gpt_config['api_base'],
+            temperature=gpt_config['temperature']
+    )
+    messages=[
+        { "role": "system", "content": "You are a helpful assistant." },
+        { "role": "user", "content": [  
+            { 
+                "type": "text", 
+                "text": f'請回答 {question},以 JSON 格式輸出，格式如下: {{\"Result\": {{\"score\": \"答案\"}}}}'
+            },
+            { 
+                "type": "image_url",
+                "image_url": {
+                    "url": page3_encoded
+                }
+            }
+        ] } 
+    ]
 
-    # # Define the prompt template with the image_url
-    # prompt_messages = [
-        
-    #     SystemMessage(content="f'請回答以下問題{question} 並以 JSON 格式輸出，格式如下: {{\"Result\": {{\"score\": \"答案\"}}}}'"),
-    #     HumanMessagePromptTemplate.from_template(
-    #         template=[
-    #             {"type": "image_url", "image_url": {"url": "{encoded_image_url}"}},
-    #         ]
-    #     ),
-    # ]
-
-    # prompt_template = ChatPromptTemplate(messages=prompt_messages)
-
-    
-    # img_file = "baseball.png"
-    # page3_encoded = local_image_to_data_url(img_file)
-
-    # llm = AzureChatOpenAI(
-    #         model=gpt_config['model_name'],
-    #         deployment_name=gpt_config['deployment_name'],
-    #         openai_api_key=gpt_config['api_key'],
-    #         openai_api_version=gpt_config['api_version'],
-    #         azure_endpoint=gpt_config['api_base'],
-    #         temperature=gpt_config['temperature']
-    # )
-    # messages=[
-    #     { "role": "system", "content": "You are a helpful assistant." },
-    #     { "role": "user", "content": [  
-    #         { 
-    #             "type": "text", 
-    #             "text": f'請回答 {question},以 JSON 格式輸出，格式如下: {{\"Result\": {{\"score\": \"答案\"}}}}'
-    #         },
-    #         { 
-    #             "type": "image_url",
-    #             "image_url": {
-    #                 "url": page3_encoded
-    #             }
-    #         }
-    #     ] } 
-    # ]
-
-    # chain = llm 
-    # response = chain.invoke(messages)
-    # parser = JsonOutputParser()
-    # parsed_result = parser.parse(response.content)
-    # parsed_result["Result"]["score"] = int(parsed_result["Result"]["score"])
-    # return json.dumps(parsed_result, ensure_ascii=False)
-    pass
+    chain = llm 
+    response = chain.invoke(messages)
+    parser = JsonOutputParser()
+    parsed_result = parser.parse(response.content)
+    parsed_result["Result"]["score"] = int(parsed_result["Result"]["score"])
+    return json.dumps(parsed_result, ensure_ascii=False)
+    # pass
     # # 5. 設定 LangChain 的 PromptTemplate
     # prompt_template = """
     # 從以下文本中找出「中華台北」的積分：
