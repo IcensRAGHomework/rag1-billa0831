@@ -109,8 +109,6 @@ def generate_hw01(question):
     return parsed_result
     
 def generate_hw02(question):
-    pass
-def generate_hw02_mine(question):
 
     # 初始化 LangChain Agent
     tools = [get_holidays]
@@ -139,7 +137,7 @@ def generate_hw02_mine(question):
     # llm = prompt | llm
     chain = llm_with_tools | fetch_holidays_if_valid
     result = chain.invoke([message])
-    # print(result)
+    print(result)
     return result
  
     
