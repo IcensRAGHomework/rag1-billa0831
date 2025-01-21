@@ -22,7 +22,9 @@ gpt_config = get_model_configuration(gpt_chat_version)
 # Calendarific API的配置
 calendarific_api_key = 'JKoxdMesIZE3ZjOdoqpT6Ay7425lr1BO'
 calendarific_base_url = 'https://api.calendarific.com/v2/holidays'
-llm = AzureChatOpenAI(
+    
+def generate_hw01(question):
+    llm = AzureChatOpenAI(
             model=gpt_config['model_name'],
             deployment_name=gpt_config['deployment_name'],
             openai_api_key=gpt_config['api_key'],
@@ -31,6 +33,30 @@ llm = AzureChatOpenAI(
             temperature=gpt_config['temperature']
     )
 
+    prompt_template = """
+    please answer question
+    將輸出格式化為json,  {{\"Result\": [{{\"date\": \"YYYY-MM-DD\", \"name\": \"紀念日名稱\"}}]}}
+
+    問題：{question}
+    """
+    # 創建 PromptTemplate 實例
+    prompt = PromptTemplate(input_variables=["question"], template=prompt_template)
+
+    # 將問題格式化為提示模板
+    formatted_question = prompt.format(question=question)
+    
+    # 使用 HumanMessage 來包裝問題
+    message = HumanMessage(content=formatted_question)
+
+    # 呼叫模型的 invoke 方法來生成回答
+    response = llm.invoke([message])
+    parser = JsonOutputParser()
+    try:
+        parsed_result = parser.parse(response.content)
+    except Exception:
+        return {"json parse error"}
+
+    return parsed_result
 # 定義一個函數來調用Calendarific API
 @tool
 def get_holidays(conutry, year, month, language) -> str:
@@ -80,33 +106,6 @@ def fetch_holidays_if_valid(ai_msg):
                 return get_holidays.invoke(tool_call["args"])
 
     return ai_msg
-    
-def generate_hw01(question):
-
-    prompt_template = """
-    please answer question
-    將輸出格式化為json,  {{\"Result\": [{{\"date\": \"YYYY-MM-DD\", \"name\": \"紀念日名稱\"}}]}}
-
-    問題：{question}
-    """
-    # 創建 PromptTemplate 實例
-    prompt = PromptTemplate(input_variables=["question"], template=prompt_template)
-
-    # 將問題格式化為提示模板
-    formatted_question = prompt.format(question=question)
-    
-    # 使用 HumanMessage 來包裝問題
-    message = HumanMessage(content=formatted_question)
-
-    # 呼叫模型的 invoke 方法來生成回答
-    response = llm.invoke([message])
-    parser = JsonOutputParser()
-    try:
-        parsed_result = parser.parse(response.content)
-    except Exception:
-        return {"json parse error"}
-
-    return parsed_result
     
 def generate_hw02(question):
 
@@ -169,9 +168,9 @@ def demo(question):
 # 測試
 question = "2024年台灣10月紀念日有哪些?"
 # hw1
-# result = generate_hw01(question)
-# print(result)
+result = generate_hw01(question)
+print(result)
 
 # hw2
-result = generate_hw02_mine(question)
-print(result)
+# result = generate_hw02_mine(question)
+# print(result)
