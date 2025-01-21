@@ -263,7 +263,6 @@ def generate_hw03(question2, question3):
     parsed_result = parser.parse(response.content)
     return json.dumps(parsed_result, ensure_ascii=False)
 
-from langchain_community.document_loaders import UnstructuredImageLoader
 import base64
 from mimetypes import guess_type
 
@@ -320,9 +319,6 @@ def generate_hw04(question):
     img_file = "D:/RAG/rag1-billa0831-main/baseball.png"
     page3_encoded = local_image_to_data_url(img_file)
 
-
-    summarize_image_prompt = ChatPromptTemplate.from_messages([prompt_template])
-
     llm = AzureChatOpenAI(
             model=gpt_config['model_name'],
             deployment_name=gpt_config['deployment_name'],
@@ -350,7 +346,6 @@ def generate_hw04(question):
     chain = llm 
     response = chain.invoke(messages)
     parser = JsonOutputParser()
-    print(response.content)
     parsed_result = parser.parse(response.content)
     parsed_result["Result"]["score"] = int(parsed_result["Result"]["score"])
     return json.dumps(parsed_result, ensure_ascii=False)
