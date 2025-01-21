@@ -13,7 +13,6 @@ from langchain_core.output_parsers import JsonOutputParser
 from openai.types.chat.completion_create_params import ResponseFormat
 from langchain.utils.openai_functions import convert_pydantic_to_openai_function
 from langchain_core.tools import tool
-import calendarific
 
 
 gpt_chat_version = 'gpt-4o'
@@ -22,6 +21,45 @@ gpt_config = get_model_configuration(gpt_chat_version)
 # Calendarific API的配置
 calendarific_api_key = 'JKoxdMesIZE3ZjOdoqpT6Ay7425lr1BO'
 calendarific_base_url = 'https://api.calendarific.com/v2/holidays'
+
+def generate_hw01(question):
+    llm = AzureChatOpenAI(
+            model=gpt_config['model_name'],
+            deployment_name=gpt_config['deployment_name'],
+            openai_api_key=gpt_config['api_key'],
+            openai_api_version=gpt_config['api_version'],
+            azure_endpoint=gpt_config['api_base'],
+            temperature=gpt_config['temperature']
+    )
+
+    prompt_template = """
+    please answer question
+    將輸出格式化為json, 包含以下鍵
+    Result
+    date
+    name
+
+    問題：{question}
+    """
+    # 創建 PromptTemplate 實例
+    prompt = PromptTemplate(input_variables=["question"], template=prompt_template)
+
+    # 將問題格式化為提示模板
+    formatted_question = prompt.format(question=question)
+    
+    # 使用 HumanMessage 來包裝問題
+    message = HumanMessage(content=formatted_question)
+
+    
+    # 呼叫模型的 invoke 方法來生成回答
+    response = llm.invoke([message])
+    ans = response.content.replace("```json", "")
+    ans = ans.replace("```", "")
+    return ans
+    
+    # # 返回模型回應
+    # data = json.loads(ans)
+    # return data['Result']
 
 # def generate_hw01(question):
 #     llm = AzureChatOpenAI(
@@ -51,53 +89,18 @@ calendarific_base_url = 'https://api.calendarific.com/v2/holidays'
 #     # 使用 HumanMessage 來包裝問題
 #     message = HumanMessage(content=formatted_question)
 
-    
 #     # 呼叫模型的 invoke 方法來生成回答
 #     response = llm.invoke([message])
-#     ans = response.content.replace("```json", "")
-#     ans = ans.replace("```", "")
-#     return ans
-
-def generate_hw01(question):
-    llm = AzureChatOpenAI(
-            model=gpt_config['model_name'],
-            deployment_name=gpt_config['deployment_name'],
-            openai_api_key=gpt_config['api_key'],
-            openai_api_version=gpt_config['api_version'],
-            azure_endpoint=gpt_config['api_base'],
-            temperature=gpt_config['temperature']
-    )
-
-    prompt_template = """
-    please answer question
-    將輸出格式化為json, 包含以下鍵
-    Result
-    name
-    date
-
-    問題：{question}
-    """
-    # 創建 PromptTemplate 實例
-    prompt = PromptTemplate(input_variables=["question"], template=prompt_template)
-
-    # 將問題格式化為提示模板
-    formatted_question = prompt.format(question=question)
+#     parser = JsonOutputParser()
+#     try:
+#         parsed_result = parser.parse(response.content)
+#     except Exception:
+#         return {"json parse error"}
     
-    # 使用 HumanMessage 來包裝問題
-    message = HumanMessage(content=formatted_question)
-
-    # 呼叫模型的 invoke 方法來生成回答
-    response = llm.invoke([message])
-    parser = JsonOutputParser()
-    try:
-        parsed_result = parser.parse(response.content)
-    except Exception:
-        return {"json parse error"}
-    
-    if "Result" in parsed_result and isinstance(parsed_result["Result"], list):
-        return json.dumps(parsed_result, ensure_ascii=False)
-    else:
-        return {"json not contain Result"}
+#     if "Result" in parsed_result and isinstance(parsed_result["Result"], list):
+#         return json.dumps(parsed_result, ensure_ascii=False)
+#     else:
+#         return {"json not contain Result"}
 
 # 定義一個函數來調用Calendarific API
 @tool
