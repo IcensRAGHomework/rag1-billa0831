@@ -93,8 +93,12 @@ def generate_hw01(question):
         parsed_result = parser.parse(response.content)
     except Exception:
         return {"json parse error"}
+    
+    if "Result" in parsed_result and isinstance(parsed_result["Result"], list):
+        return json.dumps(parsed_result, ensure_ascii=False)
+    else:
+        return {"json not contain Result"}
 
-    return parsed_result
 # 定義一個函數來調用Calendarific API
 @tool
 def get_holidays(conutry, year, month, language) -> str:
