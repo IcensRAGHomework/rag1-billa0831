@@ -220,42 +220,14 @@ def generate_hw03(question2, question3):
     parsed_result = parser.parse(response.content)
     return json.dumps(parsed_result, ensure_ascii=False)
 
-# def image_to_data_url(image_path):
-#     with open(image_path, "rb") as img_file:
-#         img_data = img_file.read()
-#         return "data:image/jpeg;base64," + base64.b64encode(img_data).decode('utf-8')
-    
-# def local_image_to_data_url_old(image_path):
-#     mime_type, _ = guess_type(image_path)
-#     # Default to png
-#     if mime_type is None:
-#         mime_type = 'image/png'
-
-#     # Read and encode the image file
-#     with open(image_path, "rb") as image_file:
-#         base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
-
-#     # Construct the data URL
-#     return f"data:{mime_type};base64,{base64_encoded_data}"
-
-
-def local_image_to_data_url(image_path):
-    # Guess the MIME type of the image based on the file extension
-    mime_type, _ = guess_type(image_path)
-    if mime_type is None:
-        mime_type = 'application/octet-stream'  # Default MIME type if none is found
-
-    # Read and encode the image file
-    with open(image_path, "rb") as image_file:
-        base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
-
-    # Construct the data URL
-    return f"data:{mime_type};base64,{base64_encoded_data}"
-
+def image_to_data_url(image_path):
+    with open(image_path, "rb") as img_file:
+        img_data = img_file.read()
+        return "data:image/jpeg;base64," + base64.b64encode(img_data).decode('utf-8')
 
 def generate_hw04(question):
-    image_path = 'baseball.png'
-    page3_encoded = local_image_to_data_url(image_path)
+    path = 'baseball.png'
+    page3_encoded = image_to_data_url(path)
     llm = AzureChatOpenAI(
             model=gpt_config['model_name'],
             deployment_name=gpt_config['deployment_name'],
