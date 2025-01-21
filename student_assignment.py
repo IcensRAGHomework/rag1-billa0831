@@ -218,93 +218,93 @@ def generate_hw03(question2, question3):
     parsed_result = parser.parse(response.content)
     return json.dumps(parsed_result, ensure_ascii=False)
 
-import base64
-from mimetypes import guess_type
+# import base64
+# from mimetypes import guess_type
 
-def image_to_data_url(image_path):
-    with open(image_path, "rb") as img_file:
-        img_data = img_file.read()
-        return "data:image/jpeg;base64," + base64.b64encode(img_data).decode('utf-8')
+# def image_to_data_url(image_path):
+#     with open(image_path, "rb") as img_file:
+#         img_data = img_file.read()
+#         return "data:image/jpeg;base64," + base64.b64encode(img_data).decode('utf-8')
     
-def local_image_to_data_url_old(image_path):
-    mime_type, _ = guess_type(image_path)
-    # Default to png
-    if mime_type is None:
-        mime_type = 'image/png'
+# def local_image_to_data_url_old(image_path):
+#     mime_type, _ = guess_type(image_path)
+#     # Default to png
+#     if mime_type is None:
+#         mime_type = 'image/png'
 
-    # Read and encode the image file
-    with open(image_path, "rb") as image_file:
-        base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
+#     # Read and encode the image file
+#     with open(image_path, "rb") as image_file:
+#         base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
 
-    # Construct the data URL
-    return f"data:{mime_type};base64,{base64_encoded_data}"
+#     # Construct the data URL
+#     return f"data:{mime_type};base64,{base64_encoded_data}"
 
 
-def local_image_to_data_url(image_path):
-    # Guess the MIME type of the image based on the file extension
-    mime_type, _ = guess_type(image_path)
-    if mime_type is None:
-        mime_type = 'application/octet-stream'  # Default MIME type if none is found
+# def local_image_to_data_url(image_path):
+#     # Guess the MIME type of the image based on the file extension
+#     mime_type, _ = guess_type(image_path)
+#     if mime_type is None:
+#         mime_type = 'application/octet-stream'  # Default MIME type if none is found
 
-    # Read and encode the image file
-    with open(image_path, "rb") as image_file:
-        base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
+#     # Read and encode the image file
+#     with open(image_path, "rb") as image_file:
+#         base64_encoded_data = base64.b64encode(image_file.read()).decode('utf-8')
 
-    # Construct the data URL
-    return f"data:{mime_type};base64,{base64_encoded_data}"
+#     # Construct the data URL
+#     return f"data:{mime_type};base64,{base64_encoded_data}"
 
 
 def generate_hw04(question):
-    print(question)
+    # print(question)
 
-    # Define the prompt template with the image_url
-    prompt_messages = [
+    # # Define the prompt template with the image_url
+    # prompt_messages = [
         
-        SystemMessage(content="f'請回答以下問題{question} 並以 JSON 格式輸出，格式如下: {{\"Result\": {{\"score\": \"答案\"}}}}'"),
-        HumanMessagePromptTemplate.from_template(
-            template=[
-                {"type": "image_url", "image_url": {"url": "{encoded_image_url}"}},
-            ]
-        ),
-    ]
+    #     SystemMessage(content="f'請回答以下問題{question} 並以 JSON 格式輸出，格式如下: {{\"Result\": {{\"score\": \"答案\"}}}}'"),
+    #     HumanMessagePromptTemplate.from_template(
+    #         template=[
+    #             {"type": "image_url", "image_url": {"url": "{encoded_image_url}"}},
+    #         ]
+    #     ),
+    # ]
 
-    prompt_template = ChatPromptTemplate(messages=prompt_messages)
+    # prompt_template = ChatPromptTemplate(messages=prompt_messages)
 
     
-    img_file = "D:/RAG/rag1-billa0831-main/baseball.png"
-    page3_encoded = local_image_to_data_url(img_file)
+    # img_file = "baseball.png"
+    # page3_encoded = local_image_to_data_url(img_file)
 
-    llm = AzureChatOpenAI(
-            model=gpt_config['model_name'],
-            deployment_name=gpt_config['deployment_name'],
-            openai_api_key=gpt_config['api_key'],
-            openai_api_version=gpt_config['api_version'],
-            azure_endpoint=gpt_config['api_base'],
-            temperature=gpt_config['temperature']
-    )
-    messages=[
-        { "role": "system", "content": "You are a helpful assistant." },
-        { "role": "user", "content": [  
-            { 
-                "type": "text", 
-                "text": f'請回答 {question},以 JSON 格式輸出，格式如下: {{\"Result\": {{\"score\": \"答案\"}}}}'
-            },
-            { 
-                "type": "image_url",
-                "image_url": {
-                    "url": page3_encoded
-                }
-            }
-        ] } 
-    ]
+    # llm = AzureChatOpenAI(
+    #         model=gpt_config['model_name'],
+    #         deployment_name=gpt_config['deployment_name'],
+    #         openai_api_key=gpt_config['api_key'],
+    #         openai_api_version=gpt_config['api_version'],
+    #         azure_endpoint=gpt_config['api_base'],
+    #         temperature=gpt_config['temperature']
+    # )
+    # messages=[
+    #     { "role": "system", "content": "You are a helpful assistant." },
+    #     { "role": "user", "content": [  
+    #         { 
+    #             "type": "text", 
+    #             "text": f'請回答 {question},以 JSON 格式輸出，格式如下: {{\"Result\": {{\"score\": \"答案\"}}}}'
+    #         },
+    #         { 
+    #             "type": "image_url",
+    #             "image_url": {
+    #                 "url": page3_encoded
+    #             }
+    #         }
+    #     ] } 
+    # ]
 
-    chain = llm 
-    response = chain.invoke(messages)
-    parser = JsonOutputParser()
-    parsed_result = parser.parse(response.content)
-    parsed_result["Result"]["score"] = int(parsed_result["Result"]["score"])
-    return json.dumps(parsed_result, ensure_ascii=False)
-    # pass
+    # chain = llm 
+    # response = chain.invoke(messages)
+    # parser = JsonOutputParser()
+    # parsed_result = parser.parse(response.content)
+    # parsed_result["Result"]["score"] = int(parsed_result["Result"]["score"])
+    # return json.dumps(parsed_result, ensure_ascii=False)
+    pass
     # # 5. 設定 LangChain 的 PromptTemplate
     # prompt_template = """
     # 從以下文本中找出「中華台北」的積分：
@@ -322,7 +322,7 @@ def generate_hw04(question):
     # parser = JsonOutputParser()
     # parsed_result = parser.parse(response.content)
     # return json.dumps(parsed_result, ensure_ascii=False)
-    pass
+    # pass
     
 def demo(question):
     llm = AzureChatOpenAI(
@@ -346,7 +346,7 @@ def demo(question):
 question = "2024年台灣10月紀念日有哪些?"
 question2 = "2024年台灣10月紀念日有哪些?"
 question3 = "根據先前的節日清單，這個節日{\"date\": \"10-31\", \"name\": \"蔣公誕辰紀念日\"}是否有在該月份清單？"
-question4 = "請問日本的積分是多少"
+question4 = "請問中華台北的積分是多少"
 # hw1
 # result = generate_hw01(question)
 # print(result)
