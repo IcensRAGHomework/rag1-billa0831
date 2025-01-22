@@ -3,12 +3,13 @@ import traceback
 import json
 from typing import List
 
+from langchain_core.runnables import RunnablePassthrough
 import requests
 
 from model_configurations import get_model_configuration
 
 from langchain_openai import AzureChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from langchain.prompts import HumanMessagePromptTemplate, PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from openai.types.chat.completion_create_params import ResponseFormat
@@ -74,29 +75,19 @@ def generate_hw01(question):
 
 # 定義一個函數來調用Calendarific API
 @tool
-def get_holidays(conutry, year, month, language) -> str:
+def get_holidays(conutry, year, month) -> str:
     """ get_holidays
 
     Args:
         conutry: TThe country parameter must be in the iso-3166 format as specified in the document here. To view a list of countries and regions we support, visit our list of supported countries.
         year: The year you want to return the holidays. We currently support both historical and future years until 2049. The year must be specified as a number eg, 2019
         month: Limits the number of holidays to a particular month. Must be passed as the numeric value of the month [1..12].
-        language: Returns the name of the holiday in the official language of the country if available. This defaults to english. This must be passed as the 2-letter ISO639 Language Code. An example is to return all the names of france holidays in french you can just add the parameter like this: fr
     """
-    # url = f"{calendarific_base_url}?api_key={calendarific_api_key}&country={country}&year={year}"
     url = 'https://calendarific.com/api/v2/holidays?'
-    # parameters = {
-    # # Required
-    # 'country': 'tw',
-    # 'year':    2024,
-    # 'api_key': calendarific_api_key,
-    # }
-
     parameters = {  
             "country": conutry,
             "year": year,
             "month": month,
-            "language": language,
             "api_key": calendarific_api_key
         }
     response = requests.get(url, parameters)
@@ -135,24 +126,13 @@ def generate_hw02(question):
     )
     llm_with_tools = llm.bind_tools(tools)
   
-    prompt_template = """
-    please answer question
-    將輸出格式化為json,  {{\"Result\": [{{\"date\": \"YYYY-MM-DD\", \"name\": \"紀念日名稱\"}}]}}
+    messages = [HumanMessage("please answer {question}} 將輸出格式化為json,  {{\"Result\": [{{\"date\": \"YYYY-MM-DD\", \"name\": \"紀念日名稱\"}}]}}")]
 
-    問題：{question}
-    """
-    # 創建 PromptTemplate 實例
-    prompt = PromptTemplate(input_variables=["question"], template=prompt_template)
+    ai_msg = llm_with_tools.invoke(messages)
+    messages.append(ai_msg)
 
-    # 將問題格式化為提示模板
-    formatted_question = prompt.format(question=question)
-
-    # 使用 HumanMessage 來包裝問題
-    message = HumanMessage(content=formatted_question)
-    # llm = prompt | llm
     chain = llm_with_tools | handleAIMsg_get_holidays
-    result = chain.invoke([message])
-    print(result)
+    result = chain.invoke([question])
     return result
  
 class InMemoryHistory(BaseChatMessageHistory, BaseModel):
@@ -306,8 +286,11 @@ question4 = "請問中華台北的積分是多少"
 # print(result)
 
 # hw2
+result = generate_hw02(question)
+print(result)
+
 # result = generate_hw03(question2, question3)
 # print(result)
 
-result = generate_hw04(question4)
-print(result)
+# result = generate_hw04(question4)
+# print(result)
